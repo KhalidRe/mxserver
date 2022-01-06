@@ -7,7 +7,11 @@ var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const app = express();
-app.use(cors());
+var corsOptions = {
+    origin: "http://192.168.1.65:8080/",
+    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+app.use(cors(corsOptions));
 var db = mysql.createConnection({
     multipleStatements: true,
     user: "doadmin",
