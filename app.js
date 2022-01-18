@@ -2,13 +2,12 @@ var express = require("express");
 var mysql = require("mysql");
 var bodyParser = require("body-parser");
 var session = require("express-session");
-
+var cors = require("cors");
 var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const app = express();
 app.use(cors());
-
 var db = mysql.createConnection({
     multipleStatements: true,
     user: "doadmin",
