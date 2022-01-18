@@ -7,11 +7,7 @@ var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const app = express();
-app.use(
-    cors({
-        origin: "*",
-    })
-);
+
 var db = mysql.createConnection({
     multipleStatements: true,
     user: "doadmin",
@@ -42,11 +38,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-app.use(
-    cors({
-        origin: "*",
-    })
-);
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    if (req.method === "OPTIONS") {
+        res.header("Access-control-Allow-Methods", "PUT,POST,PATCH,DELETE,GET");
+        return res.status(200).json({});
+    }
+    next();
+});
 app.get("/createtableprojects", (req, res) => {
     let sql =
         "CREATE TABLE fakturerat(id int AUTO_INCREMENT, Title VARCHAR(255), Author VARCHAR(255), Workers VARCHAR(255), Datum VARCHAR(255), Budget VARCHAR(255), Belopp VARCHAR(255), PRIMARY KEY(id))";
@@ -168,7 +168,7 @@ app.post("/createproject", (req, res) => {
         if (err) throw err;
     });
 
-    res.send("Project Created");
+    res.redirect("http://192.168.1.65:8080/#/Home");
 });
 
 app.post("/deleteproject", (req, res) => {
@@ -202,7 +202,7 @@ app.post("/deletetime", (req, res) => {
     let query = db.query(sql, project, (err, result) => {
         if (err) throw err;
     });
-    res.send("Project Deleted");
+    res.redirect("http://192.168.1.65:8080/#/Users");
 });
 
 app.post("/editproject", (req, res) => {
@@ -221,7 +221,7 @@ app.post("/editproject", (req, res) => {
     let query = db.query(sql, project, (err, result) => {
         if (err) throw err;
     });
-    res.send("Updated table");
+    res.redirect("http://192.168.1.65:8080/#/Home");
 });
 app.post("/completeproject", function(req, res) {
     var today = new Date();
@@ -253,8 +253,7 @@ app.post("/completeproject", function(req, res) {
     let query2 = db.query(sqldelete, project, (err, result) => {
         if (err) throw err;
     });
-
-    res.send("Projekt Arkiverad!");
+    res.redirect("http://192.168.1.65:8080/#/Users");
 });
 app.get("/getarkiv", (req, res) => {
     let sql = "SELECT * FROM fakturerat";
