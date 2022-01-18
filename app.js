@@ -7,7 +7,11 @@ var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const app = express();
-
+app.use(
+    cors({
+        origin: "*",
+    })
+);
 var db = mysql.createConnection({
     multipleStatements: true,
     user: "doadmin",
@@ -25,11 +29,7 @@ db.connect((err) => {
     if (err) throw err;
     console.log("Mysql Connected");
 });
-app.use(
-    cors({
-        origin: "http://192.168.1.65:8080",
-    })
-);
+
 app.use(
     session({
         secret: "secret",
@@ -42,7 +42,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-
+app.use(
+    cors({
+        origin: "*",
+    })
+);
 app.get("/createtableprojects", (req, res) => {
     let sql =
         "CREATE TABLE fakturerat(id int AUTO_INCREMENT, Title VARCHAR(255), Author VARCHAR(255), Workers VARCHAR(255), Datum VARCHAR(255), Budget VARCHAR(255), Belopp VARCHAR(255), PRIMARY KEY(id))";
