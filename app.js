@@ -161,9 +161,9 @@ app.post("/createproject", (req, res, next) => {
         completed: req.body.completed,
         precentage: req.body.precentage,
     };
-    let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
-    let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
     let sql = `INSERT INTO projects SET ?; `;
+    let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
+    let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
 
     let query = db.query(sql, project, (err, result) => {
         if (err) throw err;
