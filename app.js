@@ -2,7 +2,7 @@ var express = require("express");
 var mysql = require("mysql");
 var bodyParser = require("body-parser");
 var session = require("express-session");
-const cors = require("cors");
+
 var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
@@ -45,6 +45,13 @@ app.use((req, res, next) => {
         "Access-control-Allow-Methods",
         "PUT,POST,PATCH,DELETE,GET,OPTIONS"
     );
+    if (req.method === "OPTIONS") {
+        res.header(
+            "Access-control-Allow-Methods",
+            "PUT,POST,PATCH,DELETE,GET,OPTIONS"
+        );
+        return res.status(200).json({});
+    }
 
     next();
 });
@@ -71,8 +78,6 @@ app.get("/addpost1", (req, res) => {
     let sql = "INSERT INTO users SET ?";
     let query = db.query(sql, post, (err, result) => {
         if (err) throw err;
-
-        res.send("Project Created");
     });
 });
 app.get("/viewprojects", (req, res) => {
@@ -168,8 +173,6 @@ app.post("/createproject", (req, res) => {
     let query3 = db.query(sql3, project, (err, result) => {
         if (err) throw err;
     });
-
-    res.redirect("http://192.168.1.65:8080/#/Home");
 });
 
 app.post("/deleteproject", (req, res) => {
@@ -192,7 +195,6 @@ app.post("/deleteproject", (req, res) => {
     let query3 = db.query(sql3, project, (err, result) => {
         if (err) throw err;
     });
-    res.send("Project Deleted");
 });
 app.post("/deletetime", (req, res) => {
     let project = {
@@ -203,7 +205,6 @@ app.post("/deletetime", (req, res) => {
     let query = db.query(sql, project, (err, result) => {
         if (err) throw err;
     });
-    res.redirect("http://192.168.1.65:8080/#/Users");
 });
 
 app.post("/editproject", (req, res) => {
@@ -222,7 +223,6 @@ app.post("/editproject", (req, res) => {
     let query = db.query(sql, project, (err, result) => {
         if (err) throw err;
     });
-    res.redirect("http://192.168.1.65:8080/#/Home");
 });
 app.post("/completeproject", function(req, res) {
     var today = new Date();
@@ -254,7 +254,6 @@ app.post("/completeproject", function(req, res) {
     let query2 = db.query(sqldelete, project, (err, result) => {
         if (err) throw err;
     });
-    res.redirect("http://192.168.1.65:8080/#/Users");
 });
 app.get("/getarkiv", (req, res) => {
     let sql = "SELECT * FROM fakturerat";
