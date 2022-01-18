@@ -45,6 +45,7 @@ app.use((req, res, next) => {
         "Access-control-Allow-Methods",
         "PUT,POST,PATCH,DELETE,GET,OPTIONS"
     );
+    res.header("x-frame-options", "allow-from *");
     if (req.method === "OPTIONS") {
         res.header(
             "Access-control-Allow-Methods",
@@ -147,7 +148,7 @@ app.post("/addtime", (req, res) => {
         res.json(result);
     });
 });
-app.post("/createproject", (req, res) => {
+app.post("/createproject", (req, res, next) => {
     let maker = {
         userid: req.body.userid,
     };
