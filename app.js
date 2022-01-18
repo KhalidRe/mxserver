@@ -7,6 +7,7 @@ var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const app = express();
+app.use(cors());
 
 var db = mysql.createConnection({
     multipleStatements: true,
