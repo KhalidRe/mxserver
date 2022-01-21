@@ -10,6 +10,7 @@ const app = express();
 app.use(
     cors({
         origin: "*",
+        methods: "GET,PUT,POST,DELETE",
     })
 );
 var db = mysql.createConnection({
