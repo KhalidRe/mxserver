@@ -9,7 +9,7 @@ var PORT = process.env.PORT || 3000;
 const app = express();
 app.use(
     cors({
-        origin: "https://bajsamera.com",
+        origin: "*",
     })
 );
 var db = mysql.createConnection({
