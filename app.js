@@ -261,7 +261,7 @@ app.post("/authenticate", function(req, res) {
                 if (results[0].Username === Username) {
                     req.session.loggedin = true;
                     req.session.Username = Username;
-                    res.redirect("http://192.168.1.65:8080/");
+                    res.redirect("http://192.168.1.65:8080/#/Home");
                 } else {
                     res.send("Incorrect Username and/or Password!");
                 }
