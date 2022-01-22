@@ -82,7 +82,7 @@ app.post("/myprojects", (req, res) => {
         user: req.body.user,
     };
 
-    let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
+    let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
     let query = db.query(sql, (err, result) => {
         if (err) throw err;
         res.json(result);
@@ -262,7 +262,7 @@ app.post("/authenticate", function(req, res) {
                 if (results[0].Username === Username) {
                     req.session.loggedin = true;
                     req.session.Username = Username;
-                    res.redirect("https://flexnet.se/#/Home");
+                    res.redirect("http://192.168.1.65:8080/#/Home");
                 } else {
                     res.send("Incorrect Username and/or Password!");
                 }
