@@ -82,7 +82,7 @@ app.post("/myprojects", (req, res) => {
         user: req.body.user,
     };
 
-    let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
+    let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') OR Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
     let query = db.query(sql, (err, result) => {
         if (err) throw err;
         res.json(result);
