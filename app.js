@@ -48,7 +48,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-io.on("connection", (socket) => {
+io.on("connection", (data) => {
     console.log(`user connected`);
     socket.on("message", (data) => {
         socket.broadcast.emit("messege recived", data);
