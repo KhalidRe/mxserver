@@ -59,7 +59,7 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("messege recived", data);
     });
 });
-httpServer.listen(PORT);
+
 app.get("/createtableprojects", (req, res) => {
     let sql =
         "CREATE TABLE fakturerat(id int AUTO_INCREMENT, Title VARCHAR(255), Author VARCHAR(255), Workers VARCHAR(255), Datum VARCHAR(255), Budget VARCHAR(255), Belopp VARCHAR(255), PRIMARY KEY(id))";
@@ -306,6 +306,6 @@ app.post("/authenticate", function(req, res) {
     }
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log("server started on port 3000");
 });
