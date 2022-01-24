@@ -11,7 +11,12 @@ const url = "http://192.168.1.65:8080/#";
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+    },
+});
+
 app.use(
     cors({
         origin: "*",
@@ -48,7 +53,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-io.on("connection", (data) => {
+io.on("connection", (socket) => {
     console.log(`user connected`);
     socket.on("message", (data) => {
         socket.broadcast.emit("messege recived", data);
@@ -299,7 +304,7 @@ app.post("/authenticate", function(req, res) {
         res.end();
     }
 });
-
+httpServer.listen(PORT);
 app.listen(PORT, () => {
     console.log("server started on port 3000");
 });
