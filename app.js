@@ -11,11 +11,6 @@ const url = "http://192.168.1.65:8080/#";
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(httpServer, {
-    cors: {
-        origin: "*",
-    },
-});
 
 app.use(
     cors({
