@@ -6,6 +6,7 @@ var cors = require("cors");
 var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
+const url = "https://flexnet.se/#";
 const app = express();
 app.use(
   cors({
@@ -133,7 +134,7 @@ app.post("/addtime", (req, res) => {
   let query = db.query(sql, tid, (err, result) => {
     if (err) throw err;
     console.log(result);
-    res.json(result);
+    res.redirect(url + "/Users");
   });
 });
 app.post("/createproject", (req, res) => {
@@ -162,6 +163,7 @@ app.post("/createproject", (req, res) => {
   let query3 = db.query(sql3, project, (err, result) => {
     if (err) throw err;
   });
+  res.redirect(url + "/Home");
 });
 
 app.post("/deleteproject", (req, res) => {
@@ -184,6 +186,7 @@ app.post("/deleteproject", (req, res) => {
   let query3 = db.query(sql3, project, (err, result) => {
     if (err) throw err;
   });
+  res.redirect(url + "/Home");
 });
 app.post("/deletetime", (req, res) => {
   let project = {
@@ -194,6 +197,7 @@ app.post("/deletetime", (req, res) => {
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
+  res.redirect(url + "/Users");
 });
 
 app.post("/editproject", (req, res) => {
@@ -212,6 +216,7 @@ app.post("/editproject", (req, res) => {
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
+  res.redirect(url + "/Home");
 });
 app.post("/completeproject", function (req, res) {
   var today = new Date();
@@ -243,6 +248,7 @@ app.post("/completeproject", function (req, res) {
   let query2 = db.query(sqldelete, project, (err, result) => {
     if (err) throw err;
   });
+  res.redirect(url + "/Home");
 });
 app.get("/getarkiv", (req, res) => {
   let sql = "SELECT * FROM fakturerat";
@@ -263,7 +269,7 @@ app.post("/authenticate", function (req, res) {
         if (results[0].Username === Username) {
           req.session.loggedin = true;
           req.session.Username = Username;
-          res.redirect("https://flexnet.se/#/Home");
+          res.redirect(url + "/Home");
         } else {
           res.send("Incorrect Username and/or Password!");
         }
