@@ -74,7 +74,7 @@ app.post("/loggedin", (req, res) => {
   let maker = {
     user: req.body.user,
   };
-  let sql = `SELECT Username FROM users WHERE Username = ${maker.user}`;
+  let sql = `SELECT Username FROM users WHERE Username = '${maker.user}'`;
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
     res.json(result);
