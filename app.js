@@ -6,7 +6,7 @@ var cors = require("cors");
 var path = require("path");
 var fs = require("fs");
 var PORT = process.env.PORT || 3000;
-const url = "http://192.168.1.129:8080/#";
+const url = "https://flexnet.se/#";
 const app = express();
 app.use(
   cors({
