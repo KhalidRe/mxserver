@@ -70,6 +70,15 @@ app.get("/addpost1", (req, res) => {
     if (err) throw err;
   });
 });
+app.post("/loggedin", (req, res) => {
+  let maker = {
+    user: req.body.user,
+  };
+  let sql = `SELECT Username FROM users WHERE Username = ${maker.user}`;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+  });
+});
 app.get("/viewprojects", (req, res) => {
   let sql = "SELECT * FROM projects";
   let query = db.query(sql, (err, result) => {
@@ -91,7 +100,7 @@ app.post("/myprojects", (req, res) => {
 });
 app.get("/getusers", (req, res) => {
   let sql =
-    "SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users";
+    "SELECT id,Name,Active,Created,Completion,Profile,Status FROM users";
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
 
