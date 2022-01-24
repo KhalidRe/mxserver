@@ -5,6 +5,7 @@ var session = require("express-session");
 var cors = require("cors");
 var path = require("path");
 var fs = require("fs");
+const http = require("http");
 var PORT = process.env.PORT || 3000;
 const url = "http://192.168.1.65:8080/#";
 const app = express();
@@ -47,7 +48,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-
+io.on("connection", (socket) => {
+    console.log(`user connected`);
+    socket.on("message", (data) => {
+        socket.broadcast.emit("messege recived", data);
+    });
+});
 app.get("/createtableprojects", (req, res) => {
     let sql =
         "CREATE TABLE fakturerat(id int AUTO_INCREMENT, Title VARCHAR(255), Author VARCHAR(255), Workers VARCHAR(255), Datum VARCHAR(255), Budget VARCHAR(255), Belopp VARCHAR(255), PRIMARY KEY(id))";
