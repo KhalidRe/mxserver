@@ -8,6 +8,9 @@ var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const url = "http://192.168.1.65:8080/#";
 const app = express();
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 app.use(
     cors({
         origin: "*",
