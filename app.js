@@ -57,6 +57,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 io.on("connection", (socket) => {
   console.log(`user connected`);
+  socket.on("message", (data) => {
+    socket.broadcast.emit("messege recived", data);
+  });
 });
 
 app.get("/createtableprojects", (req, res) => {
@@ -298,6 +301,14 @@ app.post("/authenticate", function (req, res) {
     res.send("Please enter Username and Password!");
     res.end();
   }
+});
+io.on("connection", function (socket) {
+  console.log("A user connected");
+
+  //Whenever someone disconnects this piece of code executed
+  socket.on("disconnect", function () {
+    console.log("A user disconnected");
+  });
 });
 
 http.listen(PORT, function () {
