@@ -97,7 +97,6 @@ app.post("/loggedin", (req, res) => {
     res.json(result);
   });
 });
-
 app.get("/viewprojects", (req, res) => {
   let sql = "SELECT * FROM projects";
   let query = db.query(sql, (err, result) => {
