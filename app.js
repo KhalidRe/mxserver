@@ -301,6 +301,6 @@ app.post("/authenticate", function(req, res) {
     }
 });
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log("server started on port 3000");
 });
