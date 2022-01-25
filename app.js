@@ -57,9 +57,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 io.on("connection", (socket) => {
   console.log(`user connected`);
-  socket.on("message", (data) => {
-    socket.broadcast.emit("message:recived", data);
-  });
 });
 
 app.get("/createtableprojects", (req, res) => {
