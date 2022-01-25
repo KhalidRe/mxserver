@@ -302,11 +302,6 @@ app.post("/authenticate", function (req, res) {
     res.end();
   }
 });
-io.on("connection", function (socket) {
-  socket.on("new_message", function (data) {
-    console.log("client says", data);
-  });
-});
 
 http.listen(PORT, function () {
   console.log("listening on *:3000");
