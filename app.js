@@ -302,12 +302,12 @@ app.post("/authenticate", function (req, res) {
     res.end();
   }
 });
-io.on("connection", function (socket) {
+io.on("connection", (socket) => {
   console.log("A user connected");
 
   //Whenever someone disconnects this piece of code executed
-  socket.on("disconnect", function () {
-    console.log("A user disconnected");
+  socket.on("message", (data) => {
+    socket.broadcast.emit("message:received", data);
   });
 });
 
