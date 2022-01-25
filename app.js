@@ -103,7 +103,7 @@ app.get("/viewprojects", (req, res) => {
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
 
-    io.sockets.emit("viewprojects", res.json(result));
+    res.json(result);
   });
 });
 app.post("/myprojects", (req, res) => {
