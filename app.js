@@ -303,11 +303,8 @@ app.post("/authenticate", function (req, res) {
   }
 });
 io.on("connection", function (socket) {
-  console.log("A user connected");
-
-  //Whenever someone disconnects this piece of code executed
-  socket.on("disconnect", function () {
-    console.log("A user disconnected");
+  socket.on("new_message", function (data) {
+    console.log("client says", data);
   });
 });
 
