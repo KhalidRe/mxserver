@@ -8,8 +8,15 @@ var fs = require("fs");
 var PORT = process.env.PORT || 3000;
 const url = "http://192.168.1.129:8080/#";
 const app = express();
+
 const http = require("http").Server(app);
-const io = require("socket.io")(http);
+
+const io = require("socket.io")(http, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "PUT", "POST"],
+  },
+});
 
 app.use(
   cors({
@@ -154,7 +161,6 @@ app.post("/addtime", (req, res) => {
   let query = db.query(sql, tid, (err, result) => {
     if (err) throw err;
     console.log(result);
-    res.redirect(url + "/Users");
   });
 });
 app.post("/createproject", (req, res) => {
@@ -183,7 +189,6 @@ app.post("/createproject", (req, res) => {
   let query3 = db.query(sql3, project, (err, result) => {
     if (err) throw err;
   });
-  res.redirect(url + "/Home");
 });
 
 app.post("/deleteproject", (req, res) => {
@@ -206,7 +211,6 @@ app.post("/deleteproject", (req, res) => {
   let query3 = db.query(sql3, project, (err, result) => {
     if (err) throw err;
   });
-  res.redirect(url + "/Home");
 });
 app.post("/deletetime", (req, res) => {
   let project = {
@@ -217,7 +221,6 @@ app.post("/deletetime", (req, res) => {
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
-  res.redirect(url + "/Users");
 });
 
 app.post("/editproject", (req, res) => {
@@ -236,7 +239,6 @@ app.post("/editproject", (req, res) => {
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
-  res.redirect(url + "/Home");
 });
 app.post("/completeproject", function (req, res) {
   var today = new Date();
@@ -268,7 +270,6 @@ app.post("/completeproject", function (req, res) {
   let query2 = db.query(sqldelete, project, (err, result) => {
     if (err) throw err;
   });
-  res.redirect(url + "/Home");
 });
 app.get("/getarkiv", (req, res) => {
   let sql = "SELECT * FROM fakturerat";
