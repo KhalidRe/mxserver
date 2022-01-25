@@ -58,7 +58,6 @@ app.use(express.json());
 io.on("connection", (socket) => {
   console.log(`user connected`);
   socket.on("message", (data) => {
-    console.log("recived message");
     socket.broadcast.emit("messege:recived", data);
   });
 });
