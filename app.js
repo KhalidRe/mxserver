@@ -5,8 +5,9 @@ var session = require("express-session");
 var cors = require("cors");
 var path = require("path");
 var fs = require("fs");
+const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
-const url = "http://192.168.1.129:8080/#";
+const url = "http://192.168.1.191:8080/#";
 const app = express();
 
 const http = require("http").Server(app);
@@ -27,15 +28,9 @@ app.use(
 
 var db = mysql.createConnection({
   multipleStatements: true,
-  user: "doadmin",
-  username: "doadmin",
-  password: "2LXlPKZHwxmUAekt",
-  host: "db-mysql-lon1-29438-do-user-9795775-0.b.db.ondigitalocean.com",
-  port: 25060,
+  host: "localhost",
+  user: "root",
   database: "marinex",
-  ssl: {
-    ca: fs.readFileSync("./ca-certificate.crt"),
-  },
 });
 
 db.connect((err) => {
@@ -64,7 +59,7 @@ io.on("connection", (socket) => {
 
 app.get("/createtableprojects", (req, res) => {
   let sql =
-    "CREATE TABLE fakturerat(id int AUTO_INCREMENT, Title VARCHAR(255), Author VARCHAR(255), Workers VARCHAR(255), Datum VARCHAR(255), Budget VARCHAR(255), Belopp VARCHAR(255), PRIMARY KEY(id))";
+    "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
 
   db.query(sql, (err, result) => {
     if (err) throw err;
@@ -303,11 +298,19 @@ app.post("/authenticate", function (req, res) {
   }
 });
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  db.query("SELECT * FROM messages", function (error, result) {
+    io.emit("message:received", result);
+  });
 
   //Whenever someone disconnects this piece of code executed
   socket.on("message", (data) => {
-    socket.broadcast.emit("message:received", data);
+    let sql = "INSERT INTO messages SET ?;";
+    db.query(
+      `INSERT INTO messages(time,user,text,icon) VALUES('${data.time}','${data.user}','${data.text}','${data.icon}')`
+    );
+    db.query("SELECT * FROM messages", function (error, result) {
+      io.emit("message:received", result);
+    });
   });
 });
 
