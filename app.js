@@ -7,7 +7,7 @@ var path = require("path");
 var fs = require("fs");
 const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
-const url = "http://192.168.1.191:8080/#";
+const url = "https://flexnet.se/#";
 const app = express();
 
 const http = require("http").Server(app);
@@ -28,9 +28,15 @@ app.use(
 
 var db = mysql.createConnection({
   multipleStatements: true,
-  host: "localhost",
-  user: "root",
+  user: "doadmin",
+  username: "doadmin",
+  password: "2LXlPKZHwxmUAekt",
+  host: "db-mysql-lon1-29438-do-user-9795775-0.b.db.ondigitalocean.com",
+  port: 25060,
   database: "marinex",
+  ssl: {
+    ca: fs.readFileSync("./ca-certificate.crt"),
+  },
 });
 
 db.connect((err) => {
@@ -57,16 +63,16 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/createtableprojects", (req, res) => {
-  let sql =
-    "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
+//app.get("/createtableprojects", (req, res) => {
+//let sql =
+//  "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
 
-  db.query(sql, (err, result) => {
-    if (err) throw err;
+//  db.query(sql, (err, result) => {
+// if (err) throw err;
 
-    res.send("Post table created.....");
-  });
-});
+// res.send("Post table created.....");
+// });
+//});
 app.get("/addpost1", (req, res) => {
   let post = {
     Username: "MXphilip",
