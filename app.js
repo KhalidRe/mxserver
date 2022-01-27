@@ -50,12 +50,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-io.on("connection", (socket) => {
-  console.log(`user connected`);
-  socket.on("message", (data) => {
-    socket.broadcast.emit("messege recived", data);
-  });
-});
 
 app.get("/createtableprojects", (req, res) => {
   let sql =
@@ -171,7 +165,7 @@ app.post("/createproject", (req, res) => {
     completed: req.body.completed,
     precentage: req.body.precentage,
   };
-  let sql = `INSERT INTO projects SET ?; `;
+  let sql = `INSERT INTO projects SET ?;`;
   let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
   let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
 
@@ -303,8 +297,18 @@ io.on("connection", (socket) => {
   db.query("SELECT * FROM messages", function (error, result) {
     io.emit("message:received", result);
   });
+  db.query("SELECT * FROM projects", function (error, projectdata) {
+    io.emit("data:received", projectdata);
+  });
+  socket.on("info", (user) => {
+    db.query(
+      `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${user.username}'`,
+      function (error, userinfo) {
+        io.emit("info:received", userinfo);
+      }
+    );
+  });
 
-  //Whenever someone disconnects this piece of code executed
   socket.on("message", (data) => {
     let sql = "INSERT INTO messages SET ?;";
     db.query(
@@ -319,7 +323,67 @@ io.on("connection", (socket) => {
       `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Precentage=${editdata.precentage} WHERE id = ${editdata.id}`
     );
     db.query("SELECT * FROM projects", function (error, projectdata) {
-      io.emit("edit:received", projectdata);
+      io.emit("data:received", projectdata);
+    });
+  });
+  socket.on("post", (postdata) => {
+    db.query(
+      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}');`
+    );
+    db.query(
+      `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${postdata.userid}';`
+    );
+    db.query(
+      `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
+    );
+
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("data:received", projectdata);
+    });
+    db.query(
+      `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE id = '${postdata.userid}'`,
+      function (error, userinfo) {
+        io.emit("info:received", userinfo);
+      }
+    );
+  });
+  socket.on("delete", (deletedata) => {
+    db.query(
+      `DELETE from projects WHERE id = ${deletedata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${deletedata.author}' `
+    );
+
+    db.query(
+      `UPDATE users SET Active = Active - 1 WHERE Name = '${deletedata.workers}'`
+    );
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("data:received", projectdata);
+    });
+  });
+  socket.on("arkiv", (arkivdata) => {
+    var today = new Date();
+    var date =
+      today.getFullYear() +
+      "-" +
+      (today.getMonth() + 1) +
+      "-" +
+      today.getDate();
+    db.query(
+      `INSERT INTO fakturerat(Title,Author,Workers,Datum,Budget,Belopp) VALUES('${arkivdata.title}','${arkivdata.author}','${arkivdata.workers}','${date}','${arkivdata.budget}','${arkivdata.belopp}')`
+    );
+    db.query(
+      `DELETE from projects WHERE id = ${arkivdata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE users SET Created = Created - 1, Active = Active -1, Completion = Completion + 1 WHERE Name = '${arkivdata.author}' `
+    );
+    db.query(
+      `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${arkivdata.workers}'`
+    );
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("data:received", projectdata);
     });
   });
 });
