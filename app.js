@@ -7,7 +7,7 @@ var path = require("path");
 var fs = require("fs");
 const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
-const url = "https://flexnet.se/#";
+const url = "http://192.168.1.129:8080/#";
 const app = express();
 
 const http = require("http").Server(app);
@@ -28,15 +28,9 @@ app.use(
 
 var db = mysql.createConnection({
   multipleStatements: true,
-  user: "doadmin",
-  username: "doadmin",
-  password: "2LXlPKZHwxmUAekt",
-  host: "db-mysql-lon1-29438-do-user-9795775-0.b.db.ondigitalocean.com",
-  port: 25060,
+  host: "localhost",
+  user: "root",
   database: "marinex",
-  ssl: {
-    ca: fs.readFileSync("./ca-certificate.crt"),
-  },
 });
 
 db.connect((err) => {
@@ -63,16 +57,16 @@ io.on("connection", (socket) => {
   });
 });
 
-//app.get("/createtableprojects", (req, res) => {
-//let sql =
-//  "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
+app.get("/createtableprojects", (req, res) => {
+  let sql =
+    "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
 
-//  db.query(sql, (err, result) => {
-// if (err) throw err;
+  db.query(sql, (err, result) => {
+    if (err) throw err;
 
-// res.send("Post table created.....");
-// });
-//});
+    res.send("Post table created.....");
+  });
+});
 app.get("/addpost1", (req, res) => {
   let post = {
     Username: "MXphilip",
@@ -223,7 +217,7 @@ app.post("/deletetime", (req, res) => {
     if (err) throw err;
   });
 });
-
+/*
 app.post("/editproject", (req, res) => {
   let project = {
     id: req.body.id,
@@ -241,6 +235,8 @@ app.post("/editproject", (req, res) => {
     if (err) throw err;
   });
 });
+*/
+
 app.post("/completeproject", function (req, res) {
   var today = new Date();
   var date =
@@ -316,6 +312,14 @@ io.on("connection", (socket) => {
     );
     db.query("SELECT * FROM messages", function (error, result) {
       io.emit("message:received", result);
+    });
+  });
+  socket.on("edit", (editdata) => {
+    db.query(
+      `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Precentage=${editdata.precentage} WHERE id = ${editdata.id}`
+    );
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("edit:received", projectdata);
     });
   });
 });
