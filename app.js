@@ -33,6 +33,7 @@ var db = mysql.createConnection({
   password: "2LXlPKZHwxmUAekt",
   port: "25060",
   database: "marinex",
+  charset: "utf8mb4",
   ssl: {
     ca: fs.readFileSync("ca-certificate.crt"),
   },
