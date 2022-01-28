@@ -28,9 +28,9 @@ app.use(
 
 var db = mysql.createConnection({
   multipleStatements: true,
-  host: "db-mysql-ams3-37686-do-user-1673114-0.b.db.ondigitalocean.com",
+  host: "db-mysql-lon1-29438-do-user-9795775-0.b.db.ondigitalocean.com",
   user: "doadmin",
-  password: "EvXJc1eSHPIpVXpR",
+  password: "2LXlPKZHwxmUAekt",
   port: "25060",
   database: "marinex",
   ssl: {
