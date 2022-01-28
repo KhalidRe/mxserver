@@ -7,7 +7,7 @@ var path = require("path");
 var fs = require("fs");
 const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
-const url = "http://192.168.1.129:8080/#";
+const url = "http:flexnet.se/#";
 const app = express();
 
 const http = require("http").Server(app);
@@ -28,16 +28,19 @@ app.use(
 
 var db = mysql.createConnection({
   multipleStatements: true,
-  host: "localhost",
-  user: "root",
+  host: "db-mysql-ams3-37686-do-user-1673114-0.b.db.ondigitalocean.com",
+  user: "doadmin",
+  password: "EvXJc1eSHPIpVXpR",
+  port: "25060",
   database: "marinex",
+  ssl: {
+    ca: fs.readFileSync("ca-certificate.crt"),
+  },
 });
-
 db.connect((err) => {
   if (err) throw err;
   console.log("Mysql Connected");
 });
-
 app.use(
   session({
     secret: "secret",
@@ -50,7 +53,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-
+app.use(bodyParser.json());
 app.get("/createtableprojects", (req, res) => {
   let sql =
     "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
@@ -90,7 +93,6 @@ app.get("/viewprojects", (req, res) => {
   let sql = "SELECT * FROM projects";
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
-
     res.json(result);
   });
 });
@@ -98,7 +100,6 @@ app.post("/myprojects", (req, res) => {
   let maker = {
     user: req.body.user,
   };
-
   let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') OR Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
@@ -110,7 +111,6 @@ app.get("/getusers", (req, res) => {
     "SELECT id,Name,Active,Created,Completion,Profile,Status FROM users";
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
-
     res.json(result);
   });
 });
@@ -121,7 +121,6 @@ app.post("/workernav", (req, res) => {
   let sql = `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${maker.user}'`;
   let query = db.query(sql, (err, result) => {
     if (err) throw err;
-
     res.json(result);
   });
 });
@@ -136,13 +135,12 @@ app.post("/mytime", (req, res) => {
     res.json(result);
   });
 });
-
 app.post("/addtime", (req, res) => {
   let tid = {
     title: req.body.title,
     name: req.body.name,
     username: req.body.username,
-    description: req.body.description,
+    description: req.body.description.replace(/'/g, `"`),
     hours: req.body.hours,
     minutes: req.body.minutes,
   };
@@ -168,7 +166,6 @@ app.post("/createproject", (req, res) => {
   let sql = `INSERT INTO projects SET ?;`;
   let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
   let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
-
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
@@ -179,7 +176,6 @@ app.post("/createproject", (req, res) => {
     if (err) throw err;
   });
 });
-
 app.post("/deleteproject", (req, res) => {
   let project = {
     id: req.body.id,
@@ -187,7 +183,6 @@ app.post("/deleteproject", (req, res) => {
     author: req.body.author,
     workers: req.body.workers,
   };
-
   let sql = `DELETE from projects WHERE id = ${project.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`;
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
@@ -205,7 +200,6 @@ app.post("/deletetime", (req, res) => {
   let project = {
     id: req.body.id,
   };
-
   let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
   let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
@@ -230,7 +224,6 @@ app.post("/editproject", (req, res) => {
   });
 });
 */
-
 app.post("/completeproject", function (req, res) {
   var today = new Date();
   var date =
@@ -278,12 +271,12 @@ app.post("/authenticate", function (req, res) {
       `SELECT * FROM users WHERE Username = ? AND Password = ?`,
       [Username, Password],
       function (error, results, fields) {
-        if (results[0].Username === Username) {
+        if (results.length === 1) {
           req.session.loggedin = true;
           req.session.Username = Username;
           res.redirect(url + "/Home");
         } else {
-          res.send("Incorrect Username and/or Password!");
+          res.send("hej");
         }
         res.end();
       }
@@ -308,12 +301,12 @@ io.on("connection", (socket) => {
       }
     );
   });
-
   socket.on("message", (data) => {
     let sql = "INSERT INTO messages SET ?;";
     db.query(
       `INSERT INTO messages(time,user,text,icon) VALUES('${data.time}','${data.user}','${data.text}','${data.icon}')`
     );
+
     db.query("SELECT * FROM messages", function (error, result) {
       io.emit("message:received", result);
     });
@@ -336,7 +329,6 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
     );
-
     db.query("SELECT * FROM projects", function (error, projectdata) {
       io.emit("data:received", projectdata);
     });
@@ -354,7 +346,6 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${deletedata.author}' `
     );
-
     db.query(
       `UPDATE users SET Active = Active - 1 WHERE Name = '${deletedata.workers}'`
     );
@@ -387,7 +378,6 @@ io.on("connection", (socket) => {
     });
   });
 });
-
 http.listen(PORT, function () {
   console.log("listening on *:3000");
 });
