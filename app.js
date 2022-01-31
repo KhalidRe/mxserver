@@ -393,6 +393,13 @@ io.on("connection", (socket) => {
     db.query(
       `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes,Datum) VALUES('${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}','${today}');`
     );
+    var minuter = timedata.minuter / 60;
+    var timmar = timedata.timmar;
+    var timeused = timmar + minuter;
+
+    db.query(
+      `INSERT INTO projects(Timeused) VALUES('${timeused}') WHERE Title = '${timedata.title}'`
+    );
   });
 });
 http.listen(PORT, function () {
