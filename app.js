@@ -302,6 +302,9 @@ io.on("connection", (socket) => {
   db.query("SELECT * FROM projects", function (error, projectdata) {
     io.emit("data:received", projectdata);
   });
+  db.query("SELECT * FROM time", function (error, timedata) {
+    io.emit("time:received", timedata);
+  });
   socket.on("info", (user) => {
     db.query(
       `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${user.username}'`,
@@ -385,6 +388,14 @@ io.on("connection", (socket) => {
     );
     db.query("SELECT * FROM projects", function (error, projectdata) {
       io.emit("data:received", projectdata);
+    });
+  });
+  socket.on("time", (timedata) => {
+    db.query(
+      `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes) VALUES(${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}');`
+    );
+    db.query("SELECT * FROM time", function (error, timedata) {
+      io.emit("time:received", timedata);
     });
   });
 });
