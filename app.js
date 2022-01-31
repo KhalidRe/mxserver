@@ -208,9 +208,19 @@ app.post("/deleteproject", (req, res) => {
 app.post("/deletetime", (req, res) => {
   let project = {
     id: req.body.id,
+    title: req.body.title,
+    minuter: req.body.minuter,
+    timmar: req.body.timmar,
   };
+  let minuter = req.body.minuter / 60;
+  let timmar = req.body.timmar;
+  let timeused = timmar + minuter;
   let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
+  let sql2 = `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${project.title}'`;
   let query = db.query(sql, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query2 = db.query(sql2, project, (err, result) => {
     if (err) throw err;
   });
 });
@@ -397,7 +407,7 @@ io.on("connection", (socket) => {
     var timmar = timedata.timmar;
     var timeused = timmar + minuter;
     db.query(
-      `UPDATE projects(Timeused) VALUES(${timeused}) WHERE Title = '${timedata.title}'`
+      `UPDATE projects SET Timeused = Timeused + ${timeused} WHERE Title = '${timedata.title}'`
     );
   });
 });
