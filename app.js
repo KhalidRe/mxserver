@@ -397,7 +397,7 @@ io.on("connection", (socket) => {
     var timmar = timedata.timmar;
     var timeused = timmar + minuter;
     db.query(
-      `INSERT INTO projects(Timeused) VALUES(${timeused}) WHERE Title = '${timedata.title}'`
+      `UPDATE projects(Timeused) VALUES(${timeused}) WHERE Title = '${timedata.title}'`
     );
   });
 });
