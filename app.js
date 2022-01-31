@@ -365,6 +365,7 @@ io.on("connection", (socket) => {
     });
   });
   socket.on("arkiv", (arkivdata) => {
+    var today = new Date();
     var date =
       today.getFullYear() +
       "-" +
