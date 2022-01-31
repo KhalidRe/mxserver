@@ -391,7 +391,7 @@ io.on("connection", (socket) => {
   socket.on("time", (timedata) => {
     var today = new Date();
     db.query(
-      `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes,Datum) VALUES(${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}',${today});`
+      `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes,Datum) VALUES(${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}','${today}');`
     );
   });
 });
