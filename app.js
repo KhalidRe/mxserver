@@ -396,7 +396,6 @@ io.on("connection", (socket) => {
     var minuter = timedata.minuter / 60;
     var timmar = timedata.timmar;
     var timeused = timmar + minuter;
-
     db.query(
       `INSERT INTO projects(Timeused) VALUES('${timeused}') WHERE Title = '${timedata.title}'`
     );
