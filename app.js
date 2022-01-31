@@ -302,9 +302,6 @@ io.on("connection", (socket) => {
   db.query("SELECT * FROM projects", function (error, projectdata) {
     io.emit("data:received", projectdata);
   });
-  db.query("SELECT * FROM time", function (error, timedata) {
-    io.emit("data:received", timedata);
-  });
   socket.on("info", (user) => {
     db.query(
       `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${user.username}'`,
@@ -341,8 +338,8 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
     );
-    db.query("SELECT * FROM projects", function (error, timedata) {
-      io.emit("data:received", timedata);
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("data:received", projectdata);
     });
     db.query(
       `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE id = '${postdata.userid}'`,
@@ -350,14 +347,6 @@ io.on("connection", (socket) => {
         io.emit("info:received", userinfo);
       }
     );
-  });
-  socket.on("time", (timedata) => {
-    db.query(
-      `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes) VALUES(${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}');`
-    );
-    db.query("SELECT * FROM time", function (error, timedata) {
-      io.emit("time:received", timedata);
-    });
   });
 
   socket.on("delete", (deletedata) => {
