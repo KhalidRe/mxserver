@@ -331,7 +331,7 @@ io.on("connection", (socket) => {
   });
   socket.on("post", (postdata) => {
     db.query(
-      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}');`
+      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}','${postdata.timebudget}','${postdata.timeused}');`
     );
     db.query(
       `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${postdata.userid}';`
