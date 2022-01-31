@@ -214,7 +214,7 @@ app.post("/deletetime", (req, res) => {
   };
   let minuter = req.body.minuter / 60;
   let timmar = req.body.timmar;
-  let timeused = timmar + minuter;
+  var timeused = parseInt(timmar + minuter);
   let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
   let sql2 = `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${project.title}'`;
   let query = db.query(sql, project, (err, result) => {
@@ -405,7 +405,7 @@ io.on("connection", (socket) => {
     );
     var minuter = timedata.minuter / 60;
     var timmar = timedata.timmar;
-    var timeused = timmar + minuter;
+    var timeused = parseInt(timmar + minuter);
     db.query(
       `UPDATE projects SET Timeused = Timeused + ${timeused} WHERE Title = '${timedata.title}'`
     );
