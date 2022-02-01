@@ -337,7 +337,7 @@ io.on("connection", (socket) => {
   });
   socket.on("edit", (editdata) => {
     db.query(
-      `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Precentage = ${editdata.precentage}, Statu = '${editdata.status}' WHERE id = ${editdata.id}`
+      `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Statu = '${editdata.status}', Precentage = '${editdata.precentage}' WHERE id = ${editdata.id}`
     );
     db.query("SELECT * FROM projects", function (error, projectdata) {
       io.emit("data:received", projectdata);
