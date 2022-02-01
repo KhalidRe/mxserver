@@ -411,18 +411,19 @@ io.on("connection", (socket) => {
       `UPDATE projects SET Timeused = Timeused + ${timeused} WHERE Title = '${timedata.title}'`
     );
   });
+  socket.on("delet:time", (dtimedata) => {
+    var minuter = parseInt(dtimedata.minuter / 60);
+    var timmar = parseInt(dtimedata.timmar);
+    var timeused = parseInt(timmar + minuter);
+    db.query(
+      `DELETE from time WHERE id = ${dtimedata.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE time SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
+    );
+  });
 });
-socket.on("delet:time", (dtimedata) => {
-  var minuter = parseInt(dtimedata.minuter / 60);
-  var timmar = parseInt(dtimedata.timmar);
-  var timeused = parseInt(timmar + minuter);
-  db.query(
-    `DELETE from time WHERE id = ${dtimedata.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`
-  );
-  db.query(
-    `UPDATE time SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
-  );
-});
+
 socket.on();
 http.listen(PORT, function () {
   console.log("listening on *:300");
