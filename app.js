@@ -423,8 +423,6 @@ io.on("connection", (socket) => {
     );
   });
 });
-
-socket.on();
 http.listen(PORT, function () {
   console.log("listening on *:300");
 });
