@@ -207,14 +207,15 @@ app.post("/deleteproject", (req, res) => {
 });
 app.post("/deletetime", (req, res) => {
   let project = {
-    id: req.body.id,
-    title: req.body.title,
-    minuter: req.body.minuter,
-    timmar: req.body.timmar,
+    id: parseInt(req.body.id),
+    title: parseInt(req.body.title),
+    minuter: parseInt(req.body.minutes),
+    timmar: parseInt(req.body.hours),
   };
+  console.log(project);
   let minuter = parseInt(project.minuter / 60);
   let timmar = parseInt(project.timmar);
-  var timeused = parseInt(timmar + minuter);
+  var timeused = timmar + minuter;
   let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
   let sql2 = `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${project.title}'`;
   let query = db.query(sql, project, (err, result) => {
