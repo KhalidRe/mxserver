@@ -207,10 +207,10 @@ app.post("/deleteproject", (req, res) => {
 });
 app.post("/deletetime", (req, res) => {
   let project = {
-    id: parseInt(req.body.id),
-    title: parseInt(req.body.title),
-    minuter: parseInt(req.body.minutes),
-    timmar: parseInt(req.body.hours),
+    id: req.body.id,
+    title: req.body.title,
+    minuter: req.body.minutes,
+    timmar: req.body.hours,
   };
   console.log(project);
   let minuter = parseInt(project.minuter / 60);
