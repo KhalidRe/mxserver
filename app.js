@@ -419,7 +419,7 @@ io.on("connection", (socket) => {
       `DELETE from time WHERE id = ${dtimedata.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`
     );
     db.query(
-      `UPDATE time SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
+      `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
     );
   });
 });
