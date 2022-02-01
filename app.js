@@ -310,9 +310,12 @@ io.on("connection", (socket) => {
   db.query("SELECT * FROM messages", function (error, result) {
     io.emit("message:received", result);
   });
-  db.query("SELECT * FROM projects", function (error, projectdata) {
-    io.emit("data:received", projectdata);
-  });
+  db.query(
+    "SELECT * FROM projects ORDER BY Statu",
+    function (error, projectdata) {
+      io.emit("data:received", projectdata);
+    }
+  );
 
   socket.on("info", (user) => {
     db.query(
@@ -334,7 +337,7 @@ io.on("connection", (socket) => {
   });
   socket.on("edit", (editdata) => {
     db.query(
-      `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Precentage=${editdata.precentage} WHERE id = ${editdata.id}`
+      `UPDATE projects SET Title = '${editdata.title}', Deadline = '${editdata.deadline}', Completed = '${editdata.completed}', Precentage=${editdata.precentage},'${editdata.status}' WHERE id = ${editdata.id}`
     );
     db.query("SELECT * FROM projects", function (error, projectdata) {
       io.emit("data:received", projectdata);
@@ -342,7 +345,7 @@ io.on("connection", (socket) => {
   });
   socket.on("post", (postdata) => {
     db.query(
-      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage,Timebudget,Timeused) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}',${postdata.timebudget},${postdata.timeused});`
+      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage,Timebudget,Timeused) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}',${postdata.timebudget},${postdata.timeused},'${postdata.status}');`
     );
     db.query(
       `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${postdata.userid}';`
@@ -350,9 +353,12 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
     );
-    db.query("SELECT * FROM projects", function (error, projectdata) {
-      io.emit("data:received", projectdata);
-    });
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
     db.query(
       `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE id = '${postdata.userid}'`,
       function (error, userinfo) {
@@ -371,9 +377,12 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Active = Active - 1 WHERE Name = '${deletedata.workers}'`
     );
-    db.query("SELECT * FROM projects", function (error, projectdata) {
-      io.emit("data:received", projectdata);
-    });
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
   });
   socket.on("arkiv", (arkivdata) => {
     var today = new Date();
@@ -395,9 +404,12 @@ io.on("connection", (socket) => {
     db.query(
       `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${arkivdata.workers}'`
     );
-    db.query("SELECT * FROM projects", function (error, projectdata) {
-      io.emit("data:received", projectdata);
-    });
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
   });
   socket.on("time", (timedata) => {
     var today = new Date().getTime();
