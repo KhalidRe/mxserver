@@ -60,12 +60,12 @@ const SSHConnection = new Promise((resolve, reject) => {
             ...dbServer,
             stream,
           };
-          const connection = mysql.createConnection(updatedDbServer);
-          connection.connect((error) => {
+          const db = mysql.createConnection(updatedDbServer);
+          db.connect((error) => {
             if (error) {
               reject(error);
             }
-            resolve(connection);
+            resolve(db);
           });
         }
       );
