@@ -18,8 +18,10 @@
     "express-session": "^1.17.2",
     "fs": "^0.0.1-security",
     "mysql": "^2.18.1",
+    "mysql2": "^2.3.3",
     "path": "^0.12.7",
-    "socket.io": "^4.4.1"
+    "socket.io": "^4.4.1",
+    "ssh2": "^1.6.0"
   },
   "description": ""
 }
