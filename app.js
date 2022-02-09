@@ -1,7 +1,5 @@
 var express = require("express");
-const mysql = require("mysql2");
-const { Client } = require("ssh2");
-const sshClient = new Client();
+var mysql = require("mysql");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 var cors = require("cors");
@@ -27,53 +25,23 @@ app.use(
     methods: "GET,PUT,POST",
   })
 );
-const dbServer = {
-  host: "127.0.0.1",
-  port: 3306,
-  user: "flexer",
-  password: "compwear132",
-  database: "flexer",
-};
-const tunnelConfig = {
-  host: "104.248.93.243",
-  port: 22,
-  username: "root",
-  password: "Compwear@132",
-};
-const forwardConfig = {
-  srcHost: "127.0.0.1",
-  srcPort: 3306,
-  dstHost: dbServer.host,
-  dstPort: dbServer.port,
-};
-const SSHConnection = new Promise((resolve, reject) => {
-  sshClient
-    .on("ready", () => {
-      sshClient.forwardOut(
-        forwardConfig.srcHost,
-        forwardConfig.srcPort,
-        forwardConfig.dstHost,
-        forwardConfig.dstPort,
-        (err, stream) => {
-          if (err) reject(err);
-          const updatedDbServer = {
-            ...dbServer,
-            stream,
-          };
-          const db = mysql.createConnection(updatedDbServer);
-          db.connect((error) => {
-            if (error) {
-              reject(error);
-            }
-            resolve(db);
-          });
-        }
-      );
-    })
-    .connect(tunnelConfig);
-  console.log("Connected");
-});
 
+var db = mysql.createConnection({
+  multipleStatements: true,
+  host: "db-mysql-lon1-29438-do-user-9795775-0.b.db.ondigitalocean.com",
+  user: "doadmin",
+  password: "2LXlPKZHwxmUAekt",
+  port: "25060",
+  database: "marinex",
+  charset: "utf8mb4",
+  ssl: {
+    ca: fs.readFileSync("ca-certificate.crt"),
+  },
+});
+db.connect((err) => {
+  if (err) throw err;
+  console.log("Mysql Connected");
+});
 app.use(
   session({
     secret: "secret",
