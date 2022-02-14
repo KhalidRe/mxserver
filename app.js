@@ -9,7 +9,7 @@ const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
 const url = "http:flexnet.se/#";
 const app = express();
-var ServerPilot = require("serverpilot");
+
 const http = require("http").Server(app);
 const mysql = require("mysql2");
 const { Client } = require("ssh2");
@@ -493,11 +493,11 @@ app.post("/editproject", (req, res) => {
               );
             });
           });
+          http.listen(PORT, function () {
+            console.log("listening on *:300");
+          });
         }
       );
     })
     .connect(tunnelConfig);
-});
-http.listen(PORT, function () {
-  console.log("listening on *:300");
 });
