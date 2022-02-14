@@ -14,19 +14,7 @@ const http = require("http").Server(app);
 const mysql = require("mysql2");
 const { Client } = require("ssh2");
 const sshClient = new Client();
-const io = require("socket.io")(http, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "PUT", "POST"],
-  },
-});
 
-app.use(
-  cors({
-    origin: "*",
-    methods: "GET,PUT,POST",
-  })
-);
 const dbServer = {
   host: "127.0.0.1",
   port: 3306,
@@ -46,7 +34,7 @@ const forwardConfig = {
   dstHost: dbServer.host,
   dstPort: dbServer.port,
 };
-const SSHConnection = new Promise((resolve, reject) => {
+let SSHConnection = new Promise((resolve, reject) => {
   sshClient
     .on("ready", () => {
       sshClient.forwardOut(
@@ -60,7 +48,7 @@ const SSHConnection = new Promise((resolve, reject) => {
             ...dbServer,
             stream,
           };
-          var connection = mysql.createConnection(updatedDbServer);
+          let connection = mysql.createConnection(updatedDbServer);
           connection.connect((error) => {
             if (error) {
               reject(error);
@@ -69,24 +57,19 @@ const SSHConnection = new Promise((resolve, reject) => {
             console.log("Connected to mysql");
           });
 
-          /*var db = mysql.createConnection({
-  multipleStatements: true,
-  host: "db-mysql-lon1-29438-do-user-9795775-0.b.connection.ondigitalocean.com",
-  user: "doadmin",
-  password: "2LXlPKZHwxmUAekt",
-  port: "25060",
-  database: "marinex",
-  charset: "utf8mb4",
-  ssl: {
-    ca: fs.readFileSync("ca-certificate.crt"),
-  },
-}); 
-connection.connect((err) => {
-  if (err) throw err;
-  console.log("Mysql Connected");
-});
-*/
+          const io = require("socket.io")(http, {
+            cors: {
+              origin: "*",
+              methods: ["GET", "PUT", "POST"],
+            },
+          });
 
+          app.use(
+            cors({
+              origin: "*",
+              methods: "GET,PUT,POST",
+            })
+          );
           app.use(
             session({
               secret: "secret",
@@ -493,12 +476,12 @@ app.post("/editproject", (req, res) => {
               );
             });
           });
+
+          http.listen(PORT, function () {
+            console.log("listening on *:300");
+          });
         }
       );
     })
     .connect(tunnelConfig);
-});
-
-http.listen(PORT, function () {
-  console.log("listening on *:300");
 });
