@@ -15,23 +15,6 @@ const mysql = require("mysql2");
 const { Client } = require("ssh2");
 const sshClient = new Client();
 
-const io = require("socket.io")(http, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "PUT", "POST"],
-  },
-});
-var sp = new ServerPilot({
-  clientId: "cid_CWC1iSEfrSHYAtep",
-  apiKey: "edCRzmoWkApd27qOGjoX82yrWJQu97m3oITZhamH6U4",
-});
-
-app.use(
-  cors({
-    origin: "*",
-    methods: "GET,PUT,POST",
-  })
-);
 const dbServer = {
   host: "127.0.0.1",
   port: 3306,
@@ -91,7 +74,19 @@ connection.connect((err) => {
   console.log("Mysql Connected");
 });
 */
+          const io = require("socket.io")(http, {
+            cors: {
+              origin: "*",
+              methods: ["GET", "PUT", "POST"],
+            },
+          });
 
+          app.use(
+            cors({
+              origin: "*",
+              methods: "GET,PUT,POST",
+            })
+          );
           app.use(
             session({
               secret: "secret",
