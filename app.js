@@ -476,12 +476,11 @@ app.post("/editproject", (req, res) => {
               );
             });
           });
-
-          http.listen(PORT, function () {
-            console.log("listening on *:300");
-          });
         }
       );
     })
     .connect(tunnelConfig);
+});
+http.listen(PORT, function () {
+  console.log("listening on *:300");
 });
