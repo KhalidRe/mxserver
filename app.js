@@ -1,5 +1,5 @@
 var express = require("express");
-
+var mysql = require("mysql");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 var cors = require("cors");
@@ -7,253 +7,232 @@ var path = require("path");
 var fs = require("fs");
 const { get } = require("express/lib/response");
 var PORT = process.env.PORT || 3000;
-const url = "http:flexnet.se/#";
+const url = "https:flexnet.se/#";
 const app = express();
+const http = require("http");
+const https = require("https");
 
-const http = require("http").Server(app);
-const mysql = require("mysql2");
-const { Client } = require("ssh2");
-const sshClient = new Client();
+var options = {
+  key: fs.readFileSync("Key-SSH.key"),
+  cert: fs.readFileSync("SLL-Cert.crt"),
+  ca: fs.readFileSync("CA-Certificates.crt"),
+};
 
-const dbServer = {
-  host: "127.0.0.1",
-  port: 3306,
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,PUT,POST",
+  })
+);
+
+var db = mysql.createConnection({
+  multipleStatements: true,
+  host: "localhost",
   user: "FW0aaDC92v9B",
   password: "YLb9LISHj6fGxdJY",
+  port: 3306,
   database: "mx-wp-wp-0hn17IzM",
-};
-const tunnelConfig = {
-  host: "188.166.114.141",
-  port: 22,
-  username: "root",
-  password: "Compwear55Kalle",
-};
-const forwardConfig = {
-  srcHost: "127.0.0.1",
-  srcPort: 3306,
-  dstHost: dbServer.host,
-  dstPort: dbServer.port,
-};
-let SSHConnection = new Promise((resolve, reject) => {
-  sshClient
-    .on("ready", () => {
-      sshClient.forwardOut(
-        forwardConfig.srcHost,
-        forwardConfig.srcPort,
-        forwardConfig.dstHost,
-        forwardConfig.dstPort,
-        (err, stream) => {
-          if (err) reject(err);
-          const updatedDbServer = {
-            ...dbServer,
-            stream,
-          };
-          let connection = mysql.createConnection(updatedDbServer);
-          connection.connect((error) => {
-            if (error) {
-              reject(error);
-            }
-            resolve(connection);
-            console.log("Connected to mysql");
-          });
+  charset: "utf8mb4",
+});
+db.connect((err) => {
+  if (err) throw err;
+  console.log("Mysql Connected");
+});
+app.use(
+  session({
+    secret: "secret",
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+app.use(bodyParser.urlencoded({ extended: false }));
 
-          const io = require("socket.io")(http, {
-            cors: {
-              origin: "*",
-              methods: ["GET", "PUT", "POST"],
-            },
-          });
+app.use(express.urlencoded({ extended: true }));
 
-          app.use(
-            cors({
-              origin: "*",
-              methods: "GET,PUT,POST",
-            })
-          );
-          app.use(
-            session({
-              secret: "secret",
-              resave: true,
-              saveUninitialized: true,
-            })
-          );
-          app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(bodyParser.json());
+const server = https.createServer(options, app);
+server.listen(3000, () => {
+  console.log("server started ok");
+});
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "PUT", "POST"],
+  },
+  secure: true,
+});
+app.get("/createtableprojects", (req, res) => {
+  let sql =
+    "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
 
-          app.use(express.urlencoded({ extended: true }));
+  db.query(sql, (err, result) => {
+    if (err) throw err;
 
-          app.use(express.json());
-          app.use(bodyParser.json());
-          app.get("/createtableprojects", (req, res) => {
-            let sql =
-              "CREATE TABLE messages(id int AUTO_INCREMENT, time VARCHAR(255), user VARCHAR(255), text VARCHAR(255), icon VARCHAR(255), PRIMARY KEY(id))";
-
-            connection.query(sql, (err, result) => {
-              if (err) throw err;
-
-              res.send("Post table created.....");
-            });
-          });
-          app.get("/addpost1", (req, res) => {
-            let post = {
-              Username: "MXphilip",
-              Password: "kr3fG3(@X95{_>5;",
-              Name: "Philip",
-              Active: 0,
-              Created: 0,
-              Completion: 0,
-              Profile: "Philip.jpeg",
-            };
-            let sql = "INSERT INTO users SET ?";
-            let query = connection.query(sql, post, (err, result) => {
-              if (err) throw err;
-            });
-          });
-          app.post("/loggedin", (req, res) => {
-            let maker = {
-              user: req.body.user,
-            };
-            let sql = `SELECT Username,Status FROM users WHERE Username = '${maker.user}'`;
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              res.json(result);
-            });
-          });
-          app.get("/viewprojects", (req, res) => {
-            let sql = "SELECT * FROM projects";
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              res.json(result);
-            });
-          });
-          app.post("/myprojects", (req, res) => {
-            let maker = {
-              user: req.body.user,
-            };
-            let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') OR Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              res.json(result);
-            });
-          });
-          app.get("/getusers", (req, res) => {
-            let sql =
-              "SELECT id,Name,Active,Created,Completion,Profile,Status FROM users";
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              res.json(result);
-            });
-          });
-          app.post("/workernav", (req, res) => {
-            let maker = {
-              user: req.body.user,
-            };
-            let sql = `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${maker.user}'`;
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              res.json(result);
-            });
-          });
-          app.post("/mytime", (req, res) => {
-            let maker = {
-              user: req.body.user,
-            };
-            let sql = `SELECT * FROM time  WHERE Username = '${maker.user}'`;
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              console.log(result);
-              res.json(result);
-            });
-          });
-          app.post("/alltime", (req, res) => {
-            let sql = `SELECT * FROM time `;
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-              console.log(result);
-              res.json(result);
-            });
-          });
-          app.post("/addtime", (req, res) => {
-            let tid = {
-              title: req.body.title,
-              name: req.body.name,
-              username: req.body.username,
-              description: req.body.description.replace(/'/g, `"`),
-              hours: req.body.hours,
-              minutes: req.body.minutes,
-            };
-            let sql = `INSERT INTO time SET ?; `;
-            let query = connection.query(sql, tid, (err, result) => {
-              if (err) throw err;
-              console.log(result);
-            });
-          });
-          app.post("/createproject", (req, res) => {
-            let maker = {
-              userid: req.body.userid,
-            };
-            let project = {
-              title: req.body.title,
-              author: req.body.author,
-              workers: req.body.workers,
-              date: req.body.date,
-              deadline: req.body.deadline,
-              completed: req.body.completed,
-              precentage: req.body.precentage,
-            };
-            let sql = `INSERT INTO projects SET ?;`;
-            let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
-            let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
-            let query = connection.query(sql, project, (err, result) => {
-              if (err) throw err;
-            });
-            let query2 = connection.query(sql2, maker, (err, result) => {
-              if (err) throw err;
-            });
-            let query3 = connection.query(sql3, project, (err, result) => {
-              if (err) throw err;
-            });
-          });
-          app.post("/deleteproject", (req, res) => {
-            let project = {
-              id: req.body.id,
-              username: req.body.username,
-              author: req.body.author,
-              workers: req.body.workers,
-            };
-            let sql = `DELETE from projects WHERE id = ${project.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`;
-            let query = connection.query(sql, project, (err, result) => {
-              if (err) throw err;
-            });
-            let sql2 = `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${project.author}' `;
-            let query2 = connection.query(sql2, project, (err, result) => {
-              if (err) throw err;
-            });
-            let sql3 = `UPDATE users SET Active = Active - 1 WHERE Name = '${project.workers}'`;
-            let query3 = connection.query(sql3, project, (err, result) => {
-              if (err) throw err;
-            });
-          });
-          app.post("/deletetime", (req, res) => {
-            let project = {
-              id: req.body.id,
-              title: req.body.title,
-              minuter: req.body.minutes,
-              timmar: req.body.hours,
-            };
-            console.log(project);
-            let minuter = parseInt(project.minuter / 60);
-            let timmar = parseInt(project.timmar);
-            var timeused = timmar + minuter;
-            let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
-            let sql2 = `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${project.title}'`;
-            let query = connection.query(sql, project, (err, result) => {
-              if (err) throw err;
-            });
-            let query2 = connection.query(sql2, project, (err, result) => {
-              if (err) throw err;
-            });
-          });
-          /*
+    res.send("Post table created.....");
+  });
+});
+app.get("/addpost1", (req, res) => {
+  let post = {
+    Username: "MXphilip",
+    Password: "kr3fG3(@X95{_>5;",
+    Name: "Philip",
+    Active: 0,
+    Created: 0,
+    Completion: 0,
+    Profile: "Philip.jpeg",
+  };
+  let sql = "INSERT INTO users SET ?";
+  let query = db.query(sql, post, (err, result) => {
+    if (err) throw err;
+  });
+});
+app.post("/loggedin", (req, res) => {
+  let maker = {
+    user: req.body.user,
+  };
+  let sql = `SELECT Username,Status FROM users WHERE Username = '${maker.user}'`;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    res.json(result);
+  });
+});
+app.get("/viewprojects", (req, res) => {
+  let sql = "SELECT * FROM projects";
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    res.json(result);
+  });
+});
+app.post("/myprojects", (req, res) => {
+  let maker = {
+    user: req.body.user,
+  };
+  let sql = `SELECT * FROM projects WHERE Author = (SELECT Name FROM users WHERE Username = '${maker.user}') OR Workers = (SELECT Name FROM users WHERE Username = '${maker.user}') `;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    res.json(result);
+  });
+});
+app.get("/getusers", (req, res) => {
+  let sql =
+    "SELECT id,Name,Active,Created,Completion,Profile,Status FROM users";
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    res.json(result);
+  });
+});
+app.post("/workernav", (req, res) => {
+  let maker = {
+    user: req.body.user,
+  };
+  let sql = `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${maker.user}'`;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    res.json(result);
+  });
+});
+app.post("/mytime", (req, res) => {
+  let maker = {
+    user: req.body.user,
+  };
+  let sql = `SELECT * FROM time  WHERE Username = '${maker.user}'`;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    console.log(result);
+    res.json(result);
+  });
+});
+app.post("/alltime", (req, res) => {
+  let sql = `SELECT * FROM time `;
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+    console.log(result);
+    res.json(result);
+  });
+});
+app.post("/addtime", (req, res) => {
+  let tid = {
+    title: req.body.title,
+    name: req.body.name,
+    username: req.body.username,
+    description: req.body.description.replace(/'/g, `"`),
+    hours: req.body.hours,
+    minutes: req.body.minutes,
+  };
+  let sql = `INSERT INTO time SET ?; `;
+  let query = db.query(sql, tid, (err, result) => {
+    if (err) throw err;
+    console.log(result);
+  });
+});
+app.post("/createproject", (req, res) => {
+  let maker = {
+    userid: req.body.userid,
+  };
+  let project = {
+    title: req.body.title,
+    author: req.body.author,
+    workers: req.body.workers,
+    date: req.body.date,
+    deadline: req.body.deadline,
+    completed: req.body.completed,
+    precentage: req.body.precentage,
+  };
+  let sql = `INSERT INTO projects SET ?;`;
+  let sql2 = `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${maker.userid}'`;
+  let sql3 = `UPDATE users SET Active = Active + 1 WHERE Name = '${project.workers}'`;
+  let query = db.query(sql, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query2 = db.query(sql2, maker, (err, result) => {
+    if (err) throw err;
+  });
+  let query3 = db.query(sql3, project, (err, result) => {
+    if (err) throw err;
+  });
+});
+app.post("/deleteproject", (req, res) => {
+  let project = {
+    id: req.body.id,
+    username: req.body.username,
+    author: req.body.author,
+    workers: req.body.workers,
+  };
+  let sql = `DELETE from projects WHERE id = ${project.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`;
+  let query = db.query(sql, project, (err, result) => {
+    if (err) throw err;
+  });
+  let sql2 = `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${project.author}' `;
+  let query2 = db.query(sql2, project, (err, result) => {
+    if (err) throw err;
+  });
+  let sql3 = `UPDATE users SET Active = Active - 1 WHERE Name = '${project.workers}'`;
+  let query3 = db.query(sql3, project, (err, result) => {
+    if (err) throw err;
+  });
+});
+app.post("/deletetime", (req, res) => {
+  let project = {
+    id: req.body.id,
+    title: req.body.title,
+    minuter: req.body.minutes,
+    timmar: req.body.hours,
+  };
+  console.log(project);
+  let minuter = parseInt(project.minuter / 60);
+  let timmar = parseInt(project.timmar);
+  var timeused = timmar + minuter;
+  let sql = `DELETE from time WHERE id = ${project.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`;
+  let sql2 = `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${project.title}'`;
+  let query = db.query(sql, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query2 = db.query(sql2, project, (err, result) => {
+    if (err) throw err;
+  });
+});
+/*
 app.post("/editproject", (req, res) => {
   let project = {
     id: req.body.id,
@@ -267,220 +246,242 @@ app.post("/editproject", (req, res) => {
   };
   let sql = `UPDATE projects SET Title = '${project.title}', Deadline = '${project.deadline}', Completed = '${project.completed}', Precentage=${project.precentage} WHERE id = ${project.id}`;
 
-  let query = connection.query(sql, project, (err, result) => {
+  let query = db.query(sql, project, (err, result) => {
     if (err) throw err;
   });
 });
 */
-          app.post("/completeproject", function (req, res) {
-            var today = new Date();
-            var date =
-              today.getFullYear() +
-              "-" +
-              (today.getMonth() + 1) +
-              "-" +
-              today.getDate();
-            let project = {
-              id: req.body.id,
-              title: req.body.title,
-              author: req.body.author,
-              datum: date,
-              workers: req.body.workers,
-              completed: req.body.completed,
-              budget: req.body.budget,
-              belopp: req.body.belopp,
-            };
-            let sql = `INSERT INTO fakturerat(Title,Author,Workers,Datum,Budget,Belopp) VALUES('${project.title}','${project.author}','${project.workers}','${project.datum}','${project.budget}','${project.belopp}')`;
-            let sqldelete = `DELETE from projects WHERE id = ${project.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`;
-            let sql2 = `UPDATE users SET Created = Created - 1, Active = Active -1, Completion = Completion + 1 WHERE Name = '${project.author}' `;
-            let sql3 = `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${project.workers}'`;
-            let query1 = connection.query(sql, project, (err, result) => {
-              if (err) throw err;
-            });
-            let query4 = connection.query(sql3, project, (err, result) => {
-              if (err) throw err;
-            });
-            let query3 = connection.query(sql2, project, (err, result) => {
-              if (err) throw err;
-            });
-            let query2 = connection.query(sqldelete, project, (err, result) => {
-              if (err) throw err;
-            });
-          });
-          app.get("/getarkiv", (req, res) => {
-            let sql = "SELECT * FROM fakturerat";
-            let query = connection.query(sql, (err, result) => {
-              if (err) throw err;
-
-              res.json(result);
-            });
-          });
-          app.post("/authenticate", function (req, res) {
-            var Username = req.body.Username;
-            var Password = req.body.Password;
-            if (Username && Password) {
-              connection.query(
-                `SELECT * FROM users WHERE Username = ? AND Password = ?`,
-                [Username, Password],
-                function (error, results, fields) {
-                  if (results.length === 1) {
-                    req.session.loggedin = true;
-                    req.session.Username = Username;
-                    res.redirect(url + "/Home");
-                  } else {
-                    res.send("hej");
-                  }
-                  res.end();
-                }
-              );
-            } else {
-              res.send("Please enter Username and Password!");
-              res.end();
-            }
-          });
-          io.on("connection", (socket) => {
-            connection.query(
-              "SELECT * FROM messages",
-              function (error, result) {
-                io.emit("message:received", result);
-              }
-            );
-            connection.query(
-              "SELECT * FROM projects ORDER BY Statu",
-              function (error, projectdata) {
-                io.emit("data:received", projectdata);
-              }
-            );
-
-            socket.on("info", (user) => {
-              connection.query(
-                `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${user.username}'`,
-                function (error, userinfo) {
-                  io.emit("info:received", userinfo);
-                }
-              );
-            });
-            socket.on("message", (data) => {
-              let sql = "INSERT INTO messages SET ?;";
-              connection.query(
-                `INSERT INTO messages(time,user,text,icon) VALUES('${data.time}','${data.user}','${data.text}','${data.icon}')`
-              );
-
-              connection.query(
-                "SELECT * FROM messages",
-                function (error, result) {
-                  io.emit("message:received", result);
-                }
-              );
-            });
-            socket.on("edit", (editdata) => {
-              connection.query(
-                `UPDATE projects SET Deadline = '${editdata.deadline}', Statu = '${editdata.status}' WHERE id = ${editdata.id}`
-              );
-              connection.query(
-                "SELECT * FROM projects",
-                function (error, projectdata) {
-                  io.emit("data:received", projectdata);
-                }
-              );
-            });
-            socket.on("post", (postdata) => {
-              connection.query(
-                `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage,Timebudget,Timeused,Statu) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}',${postdata.timebudget},${postdata.timeused},'${postdata.status}');`
-              );
-              connection.query(
-                `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${postdata.userid}';`
-              );
-              connection.query(
-                `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
-              );
-              connection.query(
-                "SELECT * FROM projects ORDER BY Statu",
-                function (error, projectdata) {
-                  io.emit("data:received", projectdata);
-                }
-              );
-              connection.query(
-                `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE id = '${postdata.userid}'`,
-                function (error, userinfo) {
-                  io.emit("info:received", userinfo);
-                }
-              );
-            });
-
-            socket.on("delete", (deletedata) => {
-              connection.query(
-                `DELETE from projects WHERE id = ${deletedata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
-              );
-              connection.query(
-                `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${deletedata.author}' `
-              );
-              connection.query(
-                `UPDATE users SET Active = Active - 1 WHERE Name = '${deletedata.workers}'`
-              );
-              connection.query(
-                "SELECT * FROM projects ORDER BY Statu",
-                function (error, projectdata) {
-                  io.emit("data:received", projectdata);
-                }
-              );
-            });
-            socket.on("arkiv", (arkivdata) => {
-              var today = new Date();
-              var date =
-                today.getFullYear() +
-                "-" +
-                (today.getMonth() + 1) +
-                "-" +
-                today.getDate();
-              connection.query(
-                `INSERT INTO fakturerat(Title,Author,Workers,Datum,Budget,Belopp) VALUES('${arkivdata.title}','${arkivdata.author}','${arkivdata.workers}','${date}','${arkivdata.budget}','${arkivdata.belopp}')`
-              );
-              connection.query(
-                `DELETE from projects WHERE id = ${arkivdata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
-              );
-              connection.query(
-                `UPDATE users SET Created = Created - 1, Active = Active -1, Completion = Completion + 1 WHERE Name = '${arkivdata.author}' `
-              );
-              connection.query(
-                `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${arkivdata.workers}'`
-              );
-              connection.query(
-                "SELECT * FROM projects ORDER BY Statu",
-                function (error, projectdata) {
-                  io.emit("data:received", projectdata);
-                }
-              );
-            });
-            socket.on("time", (timedata) => {
-              var today = new Date().getTime();
-              connection.query(
-                `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes,Datum) VALUES('${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}','${today}');`
-              );
-              var minuter = parseInt(timedata.minuter / 60);
-              var timmar = parseInt(timedata.timmar);
-              var timeused = parseInt(timmar + minuter);
-              connection.query(
-                `UPDATE projects SET Timeused = Timeused + ${timeused} WHERE Title = '${timedata.title}'`
-              );
-            });
-            socket.on("delet:time", (dtimedata) => {
-              var minuter = parseInt(dtimedata.minuter / 60);
-              var timmar = parseInt(dtimedata.timmar);
-              var timeused = parseInt(timmar + minuter);
-              connection.query(
-                `DELETE from time WHERE id = ${dtimedata.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`
-              );
-              connection.query(
-                `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
-              );
-            });
-          });
-        }
-      );
-    })
-    .connect(tunnelConfig);
+app.post("/completeproject", function (req, res) {
+  var today = new Date();
+  var date =
+    today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate();
+  let project = {
+    id: req.body.id,
+    title: req.body.title,
+    author: req.body.author,
+    datum: date,
+    workers: req.body.workers,
+    completed: req.body.completed,
+    budget: req.body.budget,
+    belopp: req.body.belopp,
+  };
+  let sql = `INSERT INTO fakturerat(Title,Author,Workers,Datum,Budget,Belopp) VALUES('${project.title}','${project.author}','${project.workers}','${project.datum}','${project.budget}','${project.belopp}')`;
+  let sqldelete = `DELETE from projects WHERE id = ${project.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`;
+  let sql2 = `UPDATE users SET Created = Created - 1, Active = Active -1, Completion = Completion + 1 WHERE Name = '${project.author}' `;
+  let sql3 = `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${project.workers}'`;
+  let query1 = db.query(sql, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query4 = db.query(sql3, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query3 = db.query(sql2, project, (err, result) => {
+    if (err) throw err;
+  });
+  let query2 = db.query(sqldelete, project, (err, result) => {
+    if (err) throw err;
+  });
 });
-http.listen(PORT, function () {
-  console.log("listening on *:300");
+app.get("/getarkiv", (req, res) => {
+  let sql = "SELECT * FROM fakturerat";
+  let query = db.query(sql, (err, result) => {
+    if (err) throw err;
+
+    res.json(result);
+  });
+});
+app.post("/authenticate", function (req, res) {
+  var Username = req.body.Username;
+  var Password = req.body.Password;
+  if (Username && Password) {
+    db.query(
+      `SELECT * FROM users WHERE Username = ? AND Password = ?`,
+      [Username, Password],
+      function (error, results, fields) {
+        if (results.length === 1) {
+          req.session.loggedin = true;
+          req.session.Username = Username;
+          res.redirect("https://flexnet.se/#/Home");
+        } else {
+          res.send("hej");
+        }
+        res.end();
+      }
+    );
+  } else {
+    res.send("Please enter Username and Password!");
+    res.end();
+  }
+});
+
+io.on("connection", (socket) => {
+  db.query("SELECT * FROM messages", function (error, result) {
+    io.emit("message:received", result);
+  });
+  db.query(
+    "SELECT * FROM projects ORDER BY Statu",
+    function (error, projectdata) {
+      io.emit("data:received", projectdata);
+    }
+  );
+  db.query("SELECT * From minitrello", function (error, trellodata) {
+    io.emit("trello:received", trellodata);
+  });
+  socket.on("info", (user) => {
+    db.query(
+      `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE Username = '${user.username}'`,
+      function (error, userinfo) {
+        io.emit("info:received", userinfo);
+      }
+    );
+  });
+  socket.on("message", (data) => {
+    let sql = "INSERT INTO messages SET ?;";
+    db.query(
+      `INSERT INTO messages(time,user,text,icon) VALUES('${data.time}','${data.user}','${data.text}','${data.icon}')`
+    );
+
+    db.query("SELECT * FROM messages", function (error, result) {
+      io.emit("message:received", result);
+    });
+  });
+  socket.on("edit", (editdata) => {
+    db.query(
+      `UPDATE projects SET Deadline = '${editdata.deadline}', Statu = '${editdata.status}' WHERE id = ${editdata.id}`
+    );
+    db.query("SELECT * FROM projects", function (error, projectdata) {
+      io.emit("data:received", projectdata);
+    });
+  });
+  socket.on("post", (postdata) => {
+    db.query(
+      `INSERT INTO projects(Title,Author,Workers,Date,Deadline,Precentage,Timebudget,Timeused,Statu,Authorstatus) VALUES('${postdata.title}','${postdata.author}','${postdata.workers}','${postdata.date}','${postdata.deadline}','${postdata.precentage}',${postdata.timebudget},${postdata.timeused},'${postdata.status}','${postdata.Authorstatus}');`
+    );
+    db.query(
+      `UPDATE users SET Created = Created + 1, Active = Active + 1 WHERE id = '${postdata.userid}';`
+    );
+    db.query(
+      `UPDATE users SET Active = Active + 1 WHERE Name = '${postdata.workers}'`
+    );
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
+    db.query(
+      `SELECT id,Username,Name,Active,Created,Completion,Profile,Status FROM users  WHERE id = '${postdata.userid}'`,
+      function (error, userinfo) {
+        io.emit("info:received", userinfo);
+      }
+    );
+  });
+  socket.on("trello:created", (trello) => {
+    console.log(trello);
+    db.query(
+      `INSERT INTO minitrello(title,description,fatherid) VALUES('${trello.title}','${trello.description}',${trello.fatherid})`
+    );
+    db.query("SELECT * From minitrello", function (error, trellodata) {
+      io.emit("trello:received", trellodata);
+    });
+  });
+
+  socket.on("trello:status", (trellostatus) => {
+    db.query(
+      `UPDATE minitrello SET completed = not completed where id = ${trellostatus.id} `
+    );
+
+    db.query("SELECT * From minitrello", function (error, trellodata) {
+      io.emit("trello:received", trellodata);
+    });
+  });
+  socket.on("trello:delete", (deletetrello) => {
+    db.query(
+      `DELETE from minitrello where id = ${deletetrello.id}; SET @num := 0;UPDATE minitrello SET id = @num := (@num+1);ALTER TABLE minitrello AUTO_INCREMENT = 1`
+    );
+    db.query("SELECT * From minitrello", function (error, trellodata) {
+      io.emit("trello:received", trellodata);
+    });
+  });
+  socket.on("delete", (deletedata) => {
+    db.query(
+      `DELETE from projects WHERE id = ${deletedata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `DELETE from minitrello where fatherid = ${deletedata.id}; SET @num := 0;UPDATE minitrello SET id = @num := (@num+1);ALTER TABLE minitrello AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE users SET Created = Created - 1, Active = Active -1 WHERE Name = '${deletedata.author}' `
+    );
+    db.query(
+      `UPDATE users SET Active = Active - 1 WHERE Name = '${deletedata.workers}'`
+    );
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
+    db.query("SELECT * From minitrello", function (error, trellodata) {
+      io.emit("trello:received", trellodata);
+    });
+  });
+  socket.on("arkiv", (arkivdata) => {
+    var today = new Date();
+    var date =
+      today.getFullYear() +
+      "-" +
+      (today.getMonth() + 1) +
+      "-" +
+      today.getDate();
+    db.query(
+      `INSERT INTO fakturerat(Title,Author,Workers,Datum,Budget,Belopp) VALUES('${arkivdata.title}','${arkivdata.author}','${arkivdata.workers}','${date}','${arkivdata.budget}','${arkivdata.belopp}')`
+    );
+    db.query(
+      `DELETE from projects WHERE id = ${arkivdata.id}; SET @num := 0;UPDATE projects SET id = @num := (@num+1);ALTER TABLE projects AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `DELETE from minitrello where fatherid = ${arkivdata.id}; SET @num := 0;UPDATE minitrello SET id = @num := (@num+1);ALTER TABLE minitrello AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE users SET Created = Created - 1, Active = Active -1, Completion = Completion + 1 WHERE Name = '${arkivdata.author}' `
+    );
+    db.query(
+      `UPDATE users SET Active = Active - 1, Completion = Completion + 1 WHERE Name = '${arkivdata.workers}'`
+    );
+    db.query(
+      "SELECT * FROM projects ORDER BY Statu",
+      function (error, projectdata) {
+        io.emit("data:received", projectdata);
+      }
+    );
+    db.query("SELECT * From minitrello", function (error, trellodata) {
+      io.emit("trello:received", trellodata);
+    });
+  });
+  socket.on("time", (timedata) => {
+    var today = new Date().getTime();
+    db.query(
+      `INSERT INTO time(Title,Name,Username,Description,Hours,Minutes,Datum) VALUES('${timedata.title}','${timedata.name}','${timedata.user}','${timedata.description}','${timedata.timmar}','${timedata.minuter}','${today}');`
+    );
+
+    var minuter = parseFloat(timedata.minuter / 60);
+    var timmar = parseInt(timedata.timmar);
+    var timeused = timmar + minuter;
+
+    db.query(
+      `UPDATE projects SET Timeused = Timeused + ${timeused} WHERE Title = '${timedata.title}'`
+    );
+  });
+  socket.on("delet:time", (dtimedata) => {
+    var minuter = parseFloat(dtimedata.minuter / 60);
+    var timmar = parseInt(dtimedata.timmar);
+    var timeused = timmar + minuter;
+    db.query(
+      `DELETE from time WHERE id = ${dtimedata.id}; SET @num := 0;UPDATE time SET id = @num := (@num+1);ALTER TABLE time AUTO_INCREMENT = 1`
+    );
+    db.query(
+      `UPDATE projects SET Timeused = Timeused - ${timeused} WHERE Title = '${dtimedata.title}'`
+    );
+  });
 });
