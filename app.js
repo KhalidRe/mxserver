@@ -40,10 +40,10 @@ app.use(
 var db = mysql.createConnection({
   multipleStatements: true,
   host: "localhost",
-  user: "FW0aaDC92v9B",
-  password: "YLb9LISHj6fGxdJY",
+  user: "******",
+  password: "******",
   port: 3306,
-  database: "mx-wp-wp-0hn17IzM",
+  database: "******",
   charset: "utf8mb4",
 });
 db.connect((err) => {
